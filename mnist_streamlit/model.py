@@ -6,7 +6,7 @@ from tensorflow.keras import layers
 from tensorflow.keras.utils import to_categorical
 
 import pprint
-
+import io
 
 def create(input_size):
     """ We will define and return a keras model."""
@@ -71,16 +71,25 @@ def run_experiment(epochs, batch_size):
 
     x_train, y_train, x_test, y_test = prepare_data(x_train, y_train, x_test, y_test)
 
+
     model = train(x_train, y_train, epochs=epochs, batch_size=batch_size)
     loss, accuracy = model.evaluate(x_test, y_test, batch_size=batch_size, verbose=0)
+    summarize(model)
 
     print(model.metrics_names)
     print(loss, accuracy)
 
 
+def summarize(model):
+    stream = io.StringIO()
+    model.summary(print_fn=lambda x: stream.write(x + '\n'))
+    summary_string = stream.getvalue()
+    stream.close()
+    return summary_string
+
 if __name__ == "__main__":
 
     batch_size = 64
-    epochs = 10
+    epochs = 2
 
     run_experiment(epochs, batch_size)
