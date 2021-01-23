@@ -5,8 +5,12 @@ from tensorflow import keras
 from tensorflow.keras import layers
 from tensorflow.keras.utils import to_categorical
 
+from keras.callbacks import History 
+
 import pprint
 import io
+
+import plot
 
 def create(input_size):
     """ We will define and return a keras model."""
@@ -28,14 +32,6 @@ def create(input_size):
 
     return model
 
-
-def train(x_train, y_train, epochs, batch_size):
-    """Here we train the model."""
-
-    model = create(input_size=x_train.shape[1])
-    model.fit(x_train, y_train, epochs=epochs, batch_size=batch_size, validation_split=0.2)
-
-    return model
 
 
 def prepare_data(x_train, y_train, x_test, y_test):
@@ -63,7 +59,7 @@ def prepare_data(x_train, y_train, x_test, y_test):
     return x_train, y_train, x_test, y_test
 
 
-def run_experiment(epochs, batch_size):
+def run_experiment(epochs, batch_size, progress_bar, status_text):
     """We will load the data, train and report"""
 
     # We load the dataset from keras directly
@@ -71,9 +67,11 @@ def run_experiment(epochs, batch_size):
 
     x_train, y_train, x_test, y_test = prepare_data(x_train, y_train, x_test, y_test)
 
-
-    model = train(x_train, y_train, epochs=epochs, batch_size=batch_size)
-    loss, accuracy = model.evaluate(x_test, y_test, batch_size=batch_size, verbose=0)
+    model = create(input_size=x_train.shape[1])
+    model.fit(x_train, y_train, epochs=epochs, batch_size=batch_size, validation_split=0.2, callbacks=[myCallback(epochs, progress_bar, status_text)])
+    
+    loss, accuracy = model.evaluate(x_test, y_test, batch_size=batch_size, verbose=1, )
+    
     summarize(model)
 
     print(model.metrics_names)
@@ -87,9 +85,21 @@ def summarize(model):
     stream.close()
     return summary_string
 
-if __name__ == "__main__":
+# if __name__ == "__main__":
+# 
+#     batch_size = 64
+#     epochs = 2
+# 
+#     run_experiment(epochs, batch_size)
 
-    batch_size = 64
-    epochs = 2
+class myCallback(keras.callbacks.Callback):
 
-    run_experiment(epochs, batch_size)
+    def __init__(self, max_epochs, progress_bar, status_text):
+        self.max_epochs = max_epochs
+        self.progress_bar = progress_bar
+        self.status_text = status_text
+
+    def on_epoch_end(self, epoch, logs=None):
+        print("proress", epoch/self.max_epochs)
+        self.progress_bar.progress((epoch + 1)  / self.max_epochs)
+        self.status_text.text(f"{round((epoch + 1)/ self.max_epochs * 100) }% Complete")
