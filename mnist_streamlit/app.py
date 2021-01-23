@@ -26,7 +26,7 @@ col_left, col_right = st.beta_columns(2)
 
 with col_left:
     chart = st.line_chart(last_rows)
-    # status_text = st.empty()
+    status_text = st.empty()
     status_text.text("0 % Complete")
     progress_bar = st.progress(0)
 
@@ -40,6 +40,6 @@ epoch = st.sidebar.slider('Epoch', min_value=10, max_value=1000)
 
 
 if st.button('Train model'):
-    progress_bar.empty()
+    progress_bar.progress(0)
     model.run_experiment(epoch, batch_size, progress_bar, status_text)
 
