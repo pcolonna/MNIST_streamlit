@@ -11,6 +11,7 @@ import pprint
 import io
 
 import plot
+import numpy as np
 
 def create(input_size):
     """ We will define and return a keras model."""
@@ -59,7 +60,7 @@ def prepare_data(x_train, y_train, x_test, y_test):
     return x_train, y_train, x_test, y_test
 
 
-def run_experiment(epochs, batch_size, progress_bar, status_text):
+def run_experiment(epochs, batch_size, progress_bar, status_text, val_acc_text, chart):
     """We will load the data, train and report"""
 
     # We load the dataset from keras directly
@@ -68,7 +69,7 @@ def run_experiment(epochs, batch_size, progress_bar, status_text):
     x_train, y_train, x_test, y_test = prepare_data(x_train, y_train, x_test, y_test)
 
     model = create(input_size=x_train.shape[1])
-    model.fit(x_train, y_train, epochs=epochs, batch_size=batch_size, validation_split=0.2, callbacks=[myCallback(epochs, progress_bar, status_text)])
+    model.fit(x_train, y_train, epochs=epochs, batch_size=batch_size, validation_split=0.2, callbacks=[myCallback(epochs, progress_bar, status_text, val_acc_text, chart)])
     
     loss, accuracy = model.evaluate(x_test, y_test, batch_size=batch_size, verbose=1, )
     
@@ -85,21 +86,24 @@ def summarize(model):
     stream.close()
     return summary_string
 
-# if __name__ == "__main__":
-# 
-#     batch_size = 64
-#     epochs = 2
-# 
-#     run_experiment(epochs, batch_size)
 
 class myCallback(keras.callbacks.Callback):
 
-    def __init__(self, max_epochs, progress_bar, status_text):
+    def __init__(self, max_epochs, progress_bar, status_text, val_acc_text, chart):
         self.max_epochs = max_epochs
         self.progress_bar = progress_bar
         self.status_text = status_text
+        self.chart = chart
+        self.loss = []
+        self.val_acc_text = val_acc_text
+        self.best_val_accuracy = 0
 
     def on_epoch_end(self, epoch, logs=None):
-        print("proress", epoch/self.max_epochs)
         self.progress_bar.progress((epoch + 1)  / self.max_epochs)
         self.status_text.text(f"{round((epoch + 1)/ self.max_epochs * 100) }% Complete")
+        
+        accuracy = logs['accuracy']
+        self.chart.add_rows(np.array([[accuracy]]))
+
+        best_val_accuracy = logs['val_accuracy'] if logs['val_accuracy'] > self.best_val_accuracy else self.val_accuracy
+        self.val_acc_text.text(f"Best Validation Accuracy: {round(best_val_accuracy, 4)}")

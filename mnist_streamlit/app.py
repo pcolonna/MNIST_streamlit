@@ -7,7 +7,7 @@ import numpy as np
 
 
 
-last_rows = np.random.randn(1, 1)
+# last_rows = np.random.randn(1, 1)]
 
 st.sidebar.title('Mnist')
 
@@ -25,9 +25,13 @@ summary = model.summarize(mnist_model)
 col_left, col_right = st.beta_columns(2)
 
 with col_left:
-    chart = st.line_chart(last_rows)
+    chart = st.line_chart(np.array([0.]))
     status_text = st.empty()
     status_text.text("0 % Complete")
+
+    val_acc_text = st.empty()
+    val_acc_text.text("Best Validation Accuracy: 0")
+
     progress_bar = st.progress(0)
 
 with col_right:
@@ -41,5 +45,5 @@ epoch = st.sidebar.slider('Epoch', min_value=10, max_value=1000)
 
 if st.button('Train model'):
     progress_bar.progress(0)
-    model.run_experiment(epoch, batch_size, progress_bar, status_text)
+    model.run_experiment(epoch, batch_size, progress_bar, status_text, val_acc_text, chart)
 
