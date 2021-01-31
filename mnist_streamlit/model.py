@@ -5,13 +5,16 @@ from tensorflow import keras
 from tensorflow.keras import layers
 from tensorflow.keras.utils import to_categorical
 
-from keras.callbacks import History 
+from keras.callbacks import ModelCheckpoint 
+from tensorflow.keras.models import load_model
 
 import pprint
 import io
 
 import plot
 import numpy as np
+
+import random
 
 def create(input_size):
     """ We will define and return a keras model."""
@@ -35,11 +38,15 @@ def create(input_size):
 
 
 
-def prepare_data(x_train, y_train, x_test, y_test):
+def prepare_data():
     """We will reshape the data so it can be used in a fully connected network"""
+
 
     # MNIST contains 60000 images of size 28x28 pixel in the training set
     # So x_train.shape[0] is (60000, 28, 28)
+
+    # We load the dataset from keras directly
+    (x_train, y_train), (x_test, y_test) = tf.keras.datasets.mnist.load_data(path="mnist.npz")
 
     # Number of training and test examples
     nb_train = x_train.shape[0]
@@ -63,13 +70,12 @@ def prepare_data(x_train, y_train, x_test, y_test):
 def run_experiment(epochs, batch_size, progress_bar, status_text, val_acc_text, chart):
     """We will load the data, train and report"""
 
-    # We load the dataset from keras directly
-    (x_train, y_train), (x_test, y_test) = tf.keras.datasets.mnist.load_data(path="mnist.npz")
-
-    x_train, y_train, x_test, y_test = prepare_data(x_train, y_train, x_test, y_test)
+    x_train, y_train, x_test, y_test = prepare_data()
 
     model = create(input_size=x_train.shape[1])
-    model.fit(x_train, y_train, epochs=epochs, batch_size=batch_size, validation_split=0.2, callbacks=[myCallback(epochs, progress_bar, status_text, val_acc_text, chart)])
+
+    mc = ModelCheckpoint("best_model.h5", monitor="val_loss", mode="min", verbose=1, save_best_only=True)
+    model.fit(x_train, y_train, epochs=epochs, batch_size=batch_size, validation_split=0.2, callbacks=[mc, myCallback(epochs, progress_bar, status_text, val_acc_text, chart)])
     
     loss, accuracy = model.evaluate(x_test, y_test, batch_size=batch_size, verbose=1, )
     
@@ -80,12 +86,42 @@ def run_experiment(epochs, batch_size, progress_bar, status_text, val_acc_text, 
 
 
 def summarize(model):
+    """ Returns the summary fo the model to streamlit"""
     stream = io.StringIO()
     model.summary(print_fn=lambda x: stream.write(x + '\n'))
     summary_string = stream.getvalue()
     stream.close()
     return summary_string
 
+
+def predict(missing_model_text, canvas, ground_truth_text, prediction_text):
+    """ Take the trained model, pick an example at random and returns its prediction."""
+
+    #try:
+    if True:
+        missing_model_text.text('')
+        best_model = load_model("best_model.h5")
+
+        _, _, x_test, y_test = prepare_data()
+
+        random_idx = random.randint(0, len(x_test))
+
+        random_mnist_example = y_test[random_idx]
+        random_mnist_input = x_test[random_idx].reshape(1, 784)
+
+        # We now predict the number
+        y_pred = best_model.predict(random_mnist_input)
+        canvas.image(random_mnist_input.reshape(28,28), width=150)
+
+
+        ground_truth_text.markdown(f"** Actual Number:** {np.argmax(random_mnist_example)}")
+        prediction_text.markdown(f"** Predicted Number:** {np.argmax(y_pred)}")
+
+        print(" np.argmax(random_mnist_example)",  np.argmax(random_mnist_example))
+    #except IOError as e:
+    #    missing_model_text.markdown("** You need to click on Train Model first **")
+    #except Exception as e:
+    #    print(e)
 
 class myCallback(keras.callbacks.Callback):
 
