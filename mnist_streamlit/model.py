@@ -117,7 +117,31 @@ def predict(missing_model_text, canvas, ground_truth_text, prediction_text):
         ground_truth_text.markdown(f"** Actual Number:** {np.argmax(random_mnist_example)}")
         prediction_text.markdown(f"** Predicted Number:** {np.argmax(y_pred)}")
 
-        print(" np.argmax(random_mnist_example)",  np.argmax(random_mnist_example))
+    #except IOError as e:
+    #    missing_model_text.markdown("** You need to click on Train Model first **")
+    #except Exception as e:
+    #    print(e)
+
+def predict_from_drawing(missing_model_text, img,  prediction_text):
+    """ Take the trained model, pick an example at random and returns its prediction."""
+
+    #try:
+    if True:
+        missing_model_text.text('')
+        best_model = load_model("best_model.h5")
+
+        
+
+       
+        mnist_input = img.reshape(1, 784)
+
+        # We now predict the number
+        y_pred = best_model.predict(mnist_input)
+
+        
+
+        prediction_text.markdown(f"** Predicted Number:** {np.argmax(y_pred)}")
+
     #except IOError as e:
     #    missing_model_text.markdown("** You need to click on Train Model first **")
     #except Exception as e:

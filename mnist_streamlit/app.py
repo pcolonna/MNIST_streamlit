@@ -5,6 +5,13 @@ import streamlit as st
 import time
 import numpy as np
 
+import pprint
+import pandas as pd
+from PIL import Image
+import streamlit as st
+from streamlit_drawable_canvas import st_canvas
+
+import cv2
 
 
 # last_rows = np.random.randn(1, 1)]
@@ -69,4 +76,62 @@ with left:
         
         missing_model_text = st.empty()
         model.predict(missing_model_text, canvas, ground_truth_text, prediction_text)
+
+
+
+st.markdown("**You can also draw a number and see the prediction.**")
+
+
+
+left, right =st.beta_columns(2)
+
+with right:
+    drawing_prediction_text = st.empty()
+
+with left:
+    # Specify canvas parameters in application
+    stroke_width = st.sidebar.slider("Stroke width: ", 1, 25, 3)
+    stroke_color = st.sidebar.color_picker("Stroke color hex: ", "#FFFFFF")
+    bg_color = st.sidebar.color_picker("Background color hex: ", "#000000")
+    bg_image = st.sidebar.file_uploader("Background image:", type=["png", "jpg"])
+    drawing_mode = st.sidebar.selectbox(
+        "Drawing tool:", ("freedraw", "line", "rect", "circle", "transform")
+    )
+    realtime_update = st.sidebar.checkbox("Update in realtime", True)
+
+    # Create a canvas component
+    canvas_result = st_canvas(
+        fill_color="rgba(255, 165, 0, 0.3)",  # Fixed fill color with some opacity
+        stroke_width=stroke_width,
+        stroke_color=stroke_color,
+        background_color="" if bg_image else bg_color,
+        background_image=Image.open(bg_image) if bg_image else None,
+        update_streamlit=realtime_update,
+        height=150,
+        width=150,
+        drawing_mode=drawing_mode,
+        key="canvas",
+    )
+    # Do something interesting with the image data and paths
+    # if canvas_result.image_data is not None:
+    #     st.image(canvas_result.image_data)
+    if canvas_result.json_data is not None:
+        # st.text(canvas_result)
+    
+        # img_gray = 255 - canvas_result.image_data[:,:,3]
+        img_gray = np.dot(canvas_result.image_data[...,:3], [0.299, 0.587, 0.114])
+        # st.text(255 - canvas_result.image_data[:,:,3])
+        #pprint.pprint(list(img_gray[0]))
+        #st.text(img_gray)
+        # st.dataframe(pd.json_normalize(canvas_result.json_data["objects"]))
+        
+        resized = cv2.resize(img_gray, dsize=(28, 28), interpolation=cv2.INTER_CUBIC)
+        #st.text(list(img_gray))
+
+    if st.button('Predict from drawing'):
+        missing_model_text_drawing = st.empty()
+        model.predict_from_drawing(missing_model_text_drawing, resized, drawing_prediction_text)
+
+
+
 
