@@ -16,31 +16,32 @@ import cv2
 
 # last_rows = np.random.randn(1, 1)]
 
-st.sidebar.title('Mnist')
+st.sidebar.title("Mnist")
 
 
-options = {'v0': 'foo', 'v1': 'bar'}
+options = {"v0": "foo", "v1": "bar"}
 
 st.sidebar.info("This is a demo application of MNIST and Streamlit")
 sidebar_select = st.sidebar.selectbox(
-    'Menu', options=list(options.keys()), key='menu_option')
+    "Menu", options=list(options.keys()), key="menu_option"
+)
 
-batch_size = st.sidebar.slider('Batch Size', min_value=16, max_value=256, step=16)
-epoch = st.sidebar.slider('Epoch', min_value=10, max_value=1000)
+batch_size = st.sidebar.slider("Batch Size", min_value=16, max_value=256, step=16)
+epoch = st.sidebar.slider("Epoch", min_value=10, max_value=1000)
 
 
 st.title("Training")
 
-st.markdown("**You can launch a model and watch its performance improves. **")
+st.markdown("**You can launch a model and watch its performance improves.**")
 
 
 mnist_model = model.create(784)
 
-col_left, col_right = st.beta_columns(2)
+col_left, col_right = st.columns(2)
 
 with col_left:
     st.markdown("## Performance")
-    chart = st.line_chart(np.array([0.]))
+    chart = st.line_chart(np.array([0.0]))
     status_text = st.empty()
     status_text.markdown("** Completed: **  0 %")
 
@@ -49,9 +50,11 @@ with col_left:
 
     progress_bar = st.progress(0)
 
-    if st.button('Train model'):
+    if st.button("Train model"):
         progress_bar.progress(0)
-        model.run_experiment(epoch, batch_size, progress_bar, status_text, val_acc_text, chart)
+        model.run_experiment(
+            epoch, batch_size, progress_bar, status_text, val_acc_text, chart
+        )
 
 with col_right:
     st.markdown("<h2> Model summary </h2>", unsafe_allow_html=True)
@@ -62,28 +65,25 @@ st.title("Inference")
 
 st.markdown("**You can pick a number at random and predict with your trained model.**")
 
-left, right =st.beta_columns(2)
+left, right = st.columns(2)
 
 with right:
     ground_truth_text = st.empty()
     prediction_text = st.empty()
 
 with left:
-    image = np.zeros((28,28))
+    image = np.zeros((28, 28))
     canvas = st.image(image, width=150)
-    
-    if st.button('Predict'):
-        
-        missing_model_text = st.empty()
-        model.predict(missing_model_text, canvas, ground_truth_text, prediction_text)
 
+    if st.button("Predict"):
+        missing_model_text = ""  # st.empty()
+        model.predict(canvas, ground_truth_text, prediction_text, missing_model_text)
 
 
 st.markdown("**You can also draw a number and see the prediction.**")
 
 
-
-left, right =st.beta_columns(2)
+left, right = st.columns(2)
 
 with right:
     drawing_prediction_text = st.empty()
@@ -112,26 +112,29 @@ with left:
         drawing_mode=drawing_mode,
         key="canvas",
     )
+
     # Do something interesting with the image data and paths
     # if canvas_result.image_data is not None:
-    #     st.image(canvas_result.image_data)
+    # st.image(canvas_result.image_data)
     if canvas_result.json_data is not None:
         # st.text(canvas_result)
-    
-        # img_gray = 255 - canvas_result.image_data[:,:,3]
-        img_gray = np.dot(canvas_result.image_data[...,:3], [0.299, 0.587, 0.114])
+
+        # grayscale_image = 255 - canvas_result.image_data[:,:,3]
+        grayscale_image = np.dot(
+            canvas_result.image_data[..., :3], [0.299, 0.587, 0.114]
+        )
         # st.text(255 - canvas_result.image_data[:,:,3])
-        #pprint.pprint(list(img_gray[0]))
-        #st.text(img_gray)
+        # pprint.pprint(list(grayscale_image[0]))
+        # st.text(grayscale_image)
         # st.dataframe(pd.json_normalize(canvas_result.json_data["objects"]))
-        
-        resized = cv2.resize(img_gray, dsize=(28, 28), interpolation=cv2.INTER_CUBIC)
-        #st.text(list(img_gray))
 
-    if st.button('Predict from drawing'):
+        resized_image = cv2.resize(
+            grayscale_image, dsize=(28, 28), interpolation=cv2.INTER_CUBIC
+        )
+        # st.text(list(grayscale_image))
+
+    if st.button("Predict from drawing"):
         missing_model_text_drawing = st.empty()
-        model.predict_from_drawing(missing_model_text_drawing, resized, drawing_prediction_text)
-
-
-
-
+        model.predict_from_drawing(
+            resized_image, drawing_prediction_text, missing_model_text_drawing
+        )
